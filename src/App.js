@@ -1,38 +1,37 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Container, Typography, Paper, Button, Stack } from "@mui/material";
 import TaskInput from "./components/TaskInput";
 import TaskList from "./components/TaskList";
+import {
+  addTask,
+  toggleTaskCompletion,
+  updateTask,
+  removeTask,
+  clearAllTasks,
+} from "./utils/taskUtils";
 
 const App = () => {
-  const [tasks, setTasks] = useState([]);
+  const [tasks, setTasks] = useState(() => {
+    const savedTasks = localStorage.getItem("tasks");
+    return savedTasks ? JSON.parse(savedTasks) : []; //for saving content even on refresh
+  });
 
-  const addTask = (text) => {
-    setTasks([...tasks, { text, completed: false }]);
-  };
+  useEffect(() => {
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+  }, [tasks]);
 
-  const toggleTaskCompletion = (index) => {
-    setTasks((prevTasks) =>
-      prevTasks.map((task, i) =>
-        i === index ? { ...task, completed: !task.completed } : task
-      )
-    );
-  };
+  const handleAddTask = (text) => setTasks((prev) => addTask(prev, text));
 
-  const updateTask = (index, newText) => {
-    setTasks((prevTasks) =>
-      prevTasks.map((task, i) =>
-        i === index ? { ...task, text: newText } : task
-      )
-    );
-  };
+  const handleToggleTask = (index) =>
+    setTasks((prev) => toggleTaskCompletion(prev, index));
 
-  const removeTask = (index) => {
-    setTasks((prevTasks) => prevTasks.filter((_, i) => i !== index));
-  };
+  const handleUpdateTask = (index, newText) =>
+    setTasks((prev) => updateTask(prev, index, newText));
 
-  const clearAllTasks = () => {
-    setTasks([]);
-  };
+  const handleRemoveTask = (index) =>
+    setTasks((prev) => removeTask(prev, index));
+
+  const handleClearAll = () => setTasks(clearAllTasks());
 
   return (
     <Container maxWidth="sm">
@@ -43,18 +42,18 @@ const App = () => {
           To-Do List 📝
         </Typography>
 
-        <TaskInput addTask={addTask} />
+        <TaskInput addTask={handleAddTask} />
 
         <TaskList
           tasks={tasks}
-          toggleTaskCompletion={toggleTaskCompletion}
-          updateTask={updateTask}
-          removeTask={removeTask}
+          toggleTaskCompletion={handleToggleTask}
+          updateTask={handleUpdateTask}
+          removeTask={handleRemoveTask}
         />
       </Paper>
       {tasks.length > 0 && (
         <Stack direction="row" justifyContent="space-between" sx={{ mt: 2 }}>
-          <Button variant="contained" color="error" onClick={clearAllTasks}>
+          <Button variant="contained" color="error" onClick={handleClearAll}>
             Clear All
           </Button>
         </Stack>
